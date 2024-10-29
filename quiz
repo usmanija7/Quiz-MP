@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(CurrencyConverterApp());
+}
+
+class CurrencyConverterApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Currency Converter',
+      home: CurrencyConverter(),
+    );
+  }
+}
+
+class CurrencyConverter extends StatefulWidget {
+  @override
+  _CurrencyConverterState createState() => _CurrencyConverterState();
+}
+
+class _CurrencyConverterState extends State<CurrencyConverter> {
+  final TextEditingController _amountController = TextEditingController();
+  String _fromCurrency = 'USD';
+  String _toCurrency = 'EUR';
+  double _exchangeRate = 0.0;
+  String _result = '';
+
+  final List<String> currencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD'];
+
+  Future<void> fetchExchangeRate() async {
+    final url =
+        'https://api.exchangerate-api.com/v4/latest/$_fromCurrency';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        _exchangeRate = data['rates'][_toCurrency];
+      });
+    } else {
+      throw Exception('Failed to load exchange rate');
+    }
+  }
+
+  void convertCurrency() {
+    double amount = double.tryParse(_amountController.text) ?? 0.0;
+    double convertedAmount = amount * _exchangeRate;
+    setState(() {
+      _result = '$amount $_fromCurrency = ${convertedAmount.toStringAsFixed(2)} $_toCurrency';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Currency Converter')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _amountController,
+              decoration: InputDecoration(labelText: 'Amount'),
+              keyboardType: TextInputType.
